@@ -1,8 +1,8 @@
 import sqlite3
-from pathlib import Path
-
+import json
 import pytest
 
+from pathlib import Path
 from token_allowance_monitor import codex_usage
 
 
@@ -118,3 +118,78 @@ def test_read_usage_extracts_only_token_count_data(tmp_path):
     assert usage.secondary.window_minutes == 10080
 
     assert not hasattr(usage, "session_path")
+
+def test_read_usage_keeps_latest_tokens_and_latest_available_limits(tmp_path):
+    session = tmp_path / "session.jsonl"
+
+    records = [
+        {
+            "timestamp": "2026-10-01T10:00:00Z",
+            "type": "event_msg",
+            "payload": {
+                "type": "token_count",
+                "info": {
+                    "last_token_usage": {
+                        "input_tokens": 100,
+                        "cached_input_tokens": 40,
+                        "output_tokens": 20,
+                        "reasoning_output_tokens": 5,
+                        "total_tokens": 120,
+                    },
+                    "model_context_window": 258400,
+                },
+                "rate_limits": {
+                    "plan_type": "plus",
+                    "primary": {
+                        "used_percent": 10,
+                        "window_minutes": 300,
+                        "resets_at": 1000,
+                    },
+                    "secondary": {
+                        "used_percent": 50,
+                        "window_minutes": 10080,
+                        "resets_at": 2000,
+                    },
+                },
+            },
+        },
+        {
+            "timestamp": "2026-10-01T10:01:00Z",
+            "type": "event_msg",
+            "payload": {
+                "type": "token_count",
+                "info": {
+                    "last_token_usage": {
+                        "input_tokens": 200,
+                        "cached_input_tokens": 80,
+                        "output_tokens": 30,
+                        "reasoning_output_tokens": 7,
+                        "total_tokens": 230,
+                    },
+                    "model_context_window": 258400,
+                },
+            },
+        },
+    ]
+
+    session.write_text(
+        "\n".join(json.dumps(record) for record in records) + "\n",
+        encoding="utf-8",
+    )
+
+    usage = codex_usage.read_usage(session)
+
+    assert usage.token_timestamp == "2026-10-01T10:01:00Z"
+    assert usage.allowance_timestamp == "2026-10-01T10:00:00Z"
+
+    assert usage.tokens is not None
+    assert usage.tokens.input_tokens == 200
+    assert usage.tokens.total_tokens == 230
+
+    assert usage.primary is not None
+    assert usage.primary.used_percent == 10
+
+    assert usage.secondary is not None
+    assert usage.secondary.used_percent == 50
+
+    assert usage.plan_type == "plus"
