@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Id": "org.flanelcat.codexusage",
+        "Name": "Codex Usage",
+        "Description": "Display Codex allowance usage",
+        "Version": "0.1.0",
+        "License": "MIT",
+        "Authors": [
+            {
+                "Name": "Patrick Edlund"
+            }
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
