@@ -64,17 +64,18 @@ Create a virtual environment and install the project in editable mode:
 
     python -m venv .venv
     .venv/bin/python -m pip install -e .
-    
+
 ## KDE Plasma widget
 
 The Plasma widget requires the command-line application to be installed with
 pipx so that `$HOME/.local/bin/codex-usage` is available.
 
-The Plasma 6 widget source is located in:
+The Plasma 6 widget is included in the project source under:
 
     plasma/org.flanelcat.codexusage/
 
-It can be installed for the current user with:
+From a cloned or downloaded copy of the project, install it for the current
+user with:
 
     kpackagetool6 --type Plasma/Applet \
         --install plasma/org.flanelcat.codexusage
