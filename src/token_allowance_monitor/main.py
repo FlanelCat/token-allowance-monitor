@@ -4,6 +4,8 @@ import argparse
 import json
 import os
 import time
+import sys
+import sqlite3
 from datetime import datetime
 
 from .codex_usage import WindowUsage, newest_session, read_usage
@@ -310,16 +312,16 @@ def cli() -> None:
     if args.interval <= 0:
         parser.error("--interval must be greater than zero")
 
-    if not args.watch:
-        if args.json:
-            json_output()
-        elif args.compact:
-            compact()
-        else:
-            main()
-        return
-
     try:
+        if not args.watch:
+            if args.json:
+                json_output()
+            elif args.compact:
+                compact()
+            else:
+                main()
+            return
+
         while True:
             os.system("clear")
             if args.compact:
@@ -333,8 +335,12 @@ def cli() -> None:
             )
             print("Press Ctrl+C to stop.")
             time.sleep(args.interval)
+
     except KeyboardInterrupt:
         print()
+    except (RuntimeError, OSError, sqlite3.Error) as error:
+        print(f"codex-usage: error: {error}", file=sys.stderr)
+        raise SystemExit(1) from None
 
 
 if __name__ == "__main__":
