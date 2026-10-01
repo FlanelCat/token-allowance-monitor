@@ -33,12 +33,14 @@ The project includes both a command-line interface and a KDE Plasma 6 widget.
 
 [pipx](https://pipx.pypa.io/) is the recommended installation method.
 
-From the project directory:
+Clone the repository and install the command-line application with pipx:
 
+    git clone https://github.com/FlanelCat/token-allowance-monitor.git
+    cd token-allowance-monitor
     pipx install .
 
-This installs Token Allowance Monitor into an isolated Python environment and
-exposes the `codex-usage` command in:
+This keeps the application in an isolated Python environment while exposing
+the `codex-usage` command in:
 
     ~/.local/bin/codex-usage
 
