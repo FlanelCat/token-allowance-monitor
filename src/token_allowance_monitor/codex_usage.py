@@ -41,6 +41,9 @@ class CodexUsage:
 def newest_session() -> Path:
     """Return the rollout file belonging to the most recently updated thread."""
 
+    if not STATE_DB.is_file():
+        raise RuntimeError("Codex state database was not found.")
+
     connection = sqlite3.connect(STATE_DB)
 
     try:
