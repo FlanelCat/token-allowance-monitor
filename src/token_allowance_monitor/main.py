@@ -144,7 +144,6 @@ def main() -> None:
             )
 
     print()
-    print(f"Session: {session}")
 
 
 def compact() -> None:
@@ -273,7 +272,6 @@ def json_output() -> None:
         "limit_reached": limit_reached,
         "token_timestamp": usage.token_timestamp,
         "allowance_timestamp": usage.allowance_timestamp,
-        "session": str(usage.session_path),
     }
 
     print(json.dumps(data, indent=2))

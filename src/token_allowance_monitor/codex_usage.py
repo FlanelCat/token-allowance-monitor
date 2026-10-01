@@ -80,7 +80,7 @@ def _window(data: dict[str, Any] | None) -> WindowUsage | None:
 
 def read_usage(session_path: Path) -> CodexUsage:
     latest_tokens: TokenUsage | None = None
-    latest_timestamp: str | None = None
+    token_timestamp: str | None = None
     allowance_timestamp: str | None = None
 
     primary: WindowUsage | None = None
