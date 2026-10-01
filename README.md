@@ -87,6 +87,14 @@ For an already installed development version:
     kpackagetool6 --type Plasma/Applet \
         --upgrade plasma/org.flanelcat.codexusage
 
+## Compatibility
+
+Token Allowance Monitor reads Codex's local state and session data directly
+from `~/.codex`.
+
+These local data formats are internal to Codex and may change between Codex
+versions. Such changes may require an update to Token Allowance Monitor.
+
 ## Privacy
 
 Token Allowance Monitor operates locally and reads only the Codex data required
