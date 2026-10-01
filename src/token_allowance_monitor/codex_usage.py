@@ -30,7 +30,6 @@ class TokenUsage:
 
 @dataclass
 class CodexUsage:
-    session_path: Path
     token_timestamp: str | None
     allowance_timestamp: str | None
     plan_type: str | None
@@ -62,7 +61,7 @@ def newest_session() -> Path:
     path = Path(row[0])
 
     if not path.is_file():
-        raise RuntimeError(f"Codex session does not exist: {path}")
+        raise RuntimeError("The latest Codex session file does not exist.")
 
     return path
 
@@ -146,7 +145,6 @@ def read_usage(session_path: Path) -> CodexUsage:
                     plan_type = limits["plan_type"]
 
     return CodexUsage(
-        session_path=session_path,
         token_timestamp=token_timestamp,
         allowance_timestamp=allowance_timestamp,
         plan_type=plan_type,
