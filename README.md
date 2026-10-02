@@ -1,5 +1,3 @@
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="flanelcat" data-color="#FFDD00" data-emoji=""  data-font="Cookie" data-text="Buy FlanelCat a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
-
 # Token Allowance Monitor
 
 A local usage monitor for OpenAI Codex on Linux.
@@ -8,6 +6,12 @@ Token Allowance Monitor reads Codex's locally stored session data and displays
 the current 5-hour and weekly allowance usage without modifying Codex data.
 
 The project includes both a command-line interface and a KDE Plasma 6 widget.
+
+<a href="https://www.buymeacoffee.com/flanelcat">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+       alt="Buy FlanelCat a Coffee"
+       height="50">
+</a>
 
 ## Features
 
