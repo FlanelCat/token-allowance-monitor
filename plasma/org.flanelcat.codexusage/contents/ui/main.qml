@@ -17,6 +17,8 @@ PlasmoidItem {
 
     property real fiveHourRemaining: 100
     property real weeklyRemaining: 100
+    property string fiveHourResetDisplay: ""
+    property string fiveHourTimeRemaining: ""
     property string weeklyResetDisplay: ""
     property string weeklyTimeRemaining: ""
 
@@ -36,6 +38,8 @@ PlasmoidItem {
             fiveHourUsed = data.five_hour.used_percent
             fiveHourRemaining = data.five_hour.remaining_percent
             fiveHourFresh = data.five_hour.fresh
+            fiveHourResetDisplay = data.five_hour.reset_display || ""
+            fiveHourTimeRemaining = data.five_hour.time_remaining || ""
         }
 
         if (data.weekly) {
@@ -141,6 +145,17 @@ PlasmoidItem {
                 "% used — " +
                 root.fiveHourRemaining.toFixed(0) +
                 "% remaining"
+        }
+
+        PlasmaComponents3.Label {
+            visible: root.fiveHourTimeRemaining !== ""
+            text: "Resets in " + root.fiveHourTimeRemaining
+        }
+
+        PlasmaComponents3.Label {
+            visible: root.fiveHourResetDisplay !== ""
+            text: root.fiveHourResetDisplay
+            opacity: 0.7
         }
 
         PlasmaComponents3.Label {
