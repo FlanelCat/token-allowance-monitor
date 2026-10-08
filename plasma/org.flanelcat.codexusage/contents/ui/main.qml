@@ -12,8 +12,11 @@ PlasmoidItem {
     property string weeklyReset: ""
     property bool fiveHourFresh: false
     property bool weeklyFresh: false
+    property bool fiveHourAvailable: false
+    property bool weeklyAvailable: false
     property bool limitReached: false
     property string lastError: ""
+    property var ordinaryUsageAllowed: null
 
     property real fiveHourRemaining: 100
     property real weeklyRemaining: 100
@@ -30,29 +33,67 @@ PlasmoidItem {
         )
     }
 
+    function clearAllowance() {
+        fiveHourUsed = 0
+        weeklyUsed = 0
+        fiveHourRemaining = 0
+        weeklyRemaining = 0
+        fiveHourFresh = false
+        weeklyFresh = false
+        fiveHourAvailable = false
+        weeklyAvailable = false
+        fiveHourResetDisplay = ""
+        fiveHourTimeRemaining = ""
+        weeklyReset = ""
+        weeklyResetDisplay = ""
+        weeklyTimeRemaining = ""
+        limitReached = false
+        ordinaryUsageAllowed = null
+    }
+
     function parseUsage(output) {
         try {
             const data = JSON.parse(output)
 
-        if (data.five_hour) {
+        if (data.five_hour !== null) {
+            fiveHourAvailable = true
             fiveHourUsed = data.five_hour.used_percent
             fiveHourRemaining = data.five_hour.remaining_percent
             fiveHourFresh = data.five_hour.fresh
             fiveHourResetDisplay = data.five_hour.reset_display || ""
             fiveHourTimeRemaining = data.five_hour.time_remaining || ""
+        } else {
+            fiveHourAvailable = false
+            fiveHourUsed = 0
+            fiveHourRemaining = 0
+            fiveHourFresh = false
+            fiveHourResetDisplay = ""
+            fiveHourTimeRemaining = ""
         }
 
-        if (data.weekly) {
+        if (data.weekly !== null) {
+            weeklyAvailable = true
             weeklyUsed = data.weekly.used_percent
             weeklyRemaining = data.weekly.remaining_percent
             weeklyFresh = data.weekly.fresh
             weeklyReset = data.weekly.resets_at || ""
             weeklyResetDisplay = data.weekly.reset_display || ""
             weeklyTimeRemaining = data.weekly.time_remaining || ""
+        } else {
+            weeklyAvailable = false
+            weeklyUsed = 0
+            weeklyRemaining = 0
+            weeklyFresh = false
+            weeklyReset = ""
+            weeklyResetDisplay = ""
+            weeklyTimeRemaining = ""
         }
-            limitReached = data.limit_reached
-            lastError = ""
+
+        limitReached = data.limit_reached
+        ordinaryUsageAllowed = data.ordinaryUsageAllowed
+        lastError = data.allowance_error || ""
         } catch (error) {
+            clearAllowance()
             lastError = "Could not parse codex-usage output"
             console.log("Codex Usage:", error)
         }
@@ -67,6 +108,7 @@ PlasmoidItem {
             disconnectSource(sourceName)
 
             if (data["exit code"] !== 0) {
+                root.clearAllowance()
                 root.lastError =
                     "codex-usage exited with code " +
                     data["exit code"]
@@ -102,8 +144,12 @@ PlasmoidItem {
             anchors.centerIn: parent
 
             text:
-                "5h " + root.fiveHourUsed.toFixed(0) +
-                "% | W " + root.weeklyUsed.toFixed(0) + "%"
+                "5h " + (root.fiveHourAvailable && root.fiveHourFresh
+                    ? root.fiveHourUsed.toFixed(0) + "%"
+                    : "?") +
+                " | W " + (root.weeklyAvailable && root.weeklyFresh
+                    ? root.weeklyUsed.toFixed(0) + "%"
+                    : "?")
 
             textFormat: Text.PlainText
             elide: Text.ElideNone
@@ -134,12 +180,14 @@ PlasmoidItem {
 
         PlasmaComponents3.ProgressBar {
             Layout.fillWidth: true
+            visible: root.fiveHourAvailable && root.fiveHourFresh
             from: 0
             to: 100
             value: root.fiveHourUsed
         }
 
         PlasmaComponents3.Label {
+            visible: root.fiveHourAvailable && root.fiveHourFresh
             text:
                 root.fiveHourUsed.toFixed(0) +
                 "% used — " +
@@ -148,19 +196,25 @@ PlasmoidItem {
         }
 
         PlasmaComponents3.Label {
-            visible: root.fiveHourTimeRemaining !== ""
+            visible: root.fiveHourAvailable && root.fiveHourTimeRemaining !== ""
             text: "Resets in " + root.fiveHourTimeRemaining
         }
 
         PlasmaComponents3.Label {
-            visible: root.fiveHourResetDisplay !== ""
+            visible: root.fiveHourAvailable && root.fiveHourResetDisplay !== ""
             text: root.fiveHourResetDisplay
             opacity: 0.7
         }
 
         PlasmaComponents3.Label {
-            visible: !root.fiveHourFresh
+            visible: root.fiveHourAvailable && !root.fiveHourFresh
             text: "New window — awaiting fresh Codex activity"
+            opacity: 0.7
+        }
+
+        PlasmaComponents3.Label {
+            visible: !root.fiveHourAvailable
+            text: "Allowance unavailable"
             opacity: 0.7
         }
 
@@ -175,12 +229,14 @@ PlasmoidItem {
 
         PlasmaComponents3.ProgressBar {
             Layout.fillWidth: true
+            visible: root.weeklyAvailable && root.weeklyFresh
             from: 0
             to: 100
             value: root.weeklyUsed
         }
 
         PlasmaComponents3.Label {
+            visible: root.weeklyAvailable && root.weeklyFresh
             text:
                 root.weeklyUsed.toFixed(0) +
                 "% used — " +
@@ -189,14 +245,33 @@ PlasmoidItem {
         }
 
         PlasmaComponents3.Label {
-            visible: root.weeklyTimeRemaining !== ""
+            visible: root.weeklyAvailable && root.weeklyTimeRemaining !== ""
             text: "Resets in " + root.weeklyTimeRemaining
         }
 
         PlasmaComponents3.Label {
-            visible: root.weeklyResetDisplay !== ""
+            visible: root.weeklyAvailable && root.weeklyResetDisplay !== ""
             text: root.weeklyResetDisplay
             opacity: 0.7
+        }
+
+        PlasmaComponents3.Label {
+            visible: root.weeklyAvailable && !root.weeklyFresh
+            text: "New window — awaiting fresh Codex activity"
+            opacity: 0.7
+        }
+
+        PlasmaComponents3.Label {
+            visible: !root.weeklyAvailable
+            text: "Allowance unavailable"
+            opacity: 0.7
+        }
+
+        PlasmaComponents3.Label {
+            visible: root.ordinaryUsageAllowed !== null
+            text: root.ordinaryUsageAllowed
+                ? "Ordinary usage allowed"
+                : "Ordinary usage not allowed"
         }
 
         Item {

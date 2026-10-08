@@ -8,7 +8,43 @@ import sys
 import sqlite3
 from datetime import datetime
 
-from .codex_usage import WindowUsage, newest_session, read_usage
+from .codex_app_server import read_live_allowance
+from .codex_usage import CodexUsage, WindowUsage, newest_session, read_usage
+
+
+def current_usage() -> CodexUsage:
+    token_timestamp = None
+    tokens = None
+
+    try:
+        history = read_usage(newest_session())
+        token_timestamp = history.token_timestamp
+        tokens = history.tokens
+    except (RuntimeError, OSError, sqlite3.Error, ValueError):
+        pass
+
+    try:
+        allowance = read_live_allowance()
+    except RuntimeError as error:
+        return CodexUsage(
+            token_timestamp=token_timestamp,
+            allowance_timestamp=None,
+            plan_type=None,
+            primary=None,
+            secondary=None,
+            tokens=tokens,
+            allowance_error=str(error),
+        )
+
+    return CodexUsage(
+        token_timestamp=token_timestamp,
+        allowance_timestamp=allowance.fetched_at,
+        plan_type=allowance.plan_type,
+        primary=allowance.primary,
+        secondary=allowance.secondary,
+        tokens=tokens,
+        ordinary_usage_allowed=allowance.ordinary_usage_allowed,
+    )
 
 
 def bar(percent: float, width: int = 20) -> str:
@@ -55,10 +91,8 @@ def print_window(name: str, usage: WindowUsage | None) -> None:
     expired = reset <= now
 
     if expired:
-        print(f"  {bar(0)}  0% used")
-        print("  100% remaining")
         print(
-            "  STATUS: NEW WINDOW — "
+            "  STATUS: ALLOWANCE UNAVAILABLE — "
             "awaiting fresh Codex activity"
         )
         return
@@ -79,8 +113,7 @@ def print_window(name: str, usage: WindowUsage | None) -> None:
 
 
 def main() -> None:
-    session = newest_session()
-    usage = read_usage(session)
+    usage = current_usage()
 
     print()
     print(f"CODEX USAGE — {(usage.plan_type or 'unknown').upper()}")
@@ -113,6 +146,9 @@ def main() -> None:
 
     print()
     print_window("Weekly allowance", usage.secondary)
+
+    if usage.allowance_error:
+        print(f"\nAllowance unavailable: {usage.allowance_error}")
 
     if usage.tokens is not None:
         tokens = usage.tokens
@@ -149,8 +185,7 @@ def main() -> None:
 
 
 def compact() -> None:
-    session = newest_session()
-    usage = read_usage(session)
+    usage = current_usage()
     now = datetime.now().astimezone()
 
     def percent(window: WindowUsage | None) -> float | None:
@@ -162,7 +197,7 @@ def compact() -> None:
         ).astimezone()
 
         if reset <= now:
-            return 0.0
+            return None
 
         return window.used_percent
 
@@ -209,11 +244,12 @@ def compact() -> None:
         f"{secondary_text}"
         f"{status}"
     )
+    if usage.allowance_error:
+        print(f"Allowance unavailable: {usage.allowance_error}")
 
 
 def json_output() -> None:
-    session = newest_session()
-    usage = read_usage(session)
+    usage = current_usage()
     now = datetime.now().astimezone()
 
     def window_data(
@@ -231,13 +267,14 @@ def json_output() -> None:
         if fresh:
             used_percent = window.used_percent
         else:
-            used_percent = 0.0
+            used_percent = None
 
         return {
             "used_percent": used_percent,
-            "remaining_percent": max(
-                0.0,
-                100.0 - used_percent,
+            "remaining_percent": (
+                max(0.0, 100.0 - used_percent)
+                if used_percent is not None
+                else None
             ),
             "fresh": fresh,
             "resets_at": (
@@ -274,6 +311,8 @@ def json_output() -> None:
         "limit_reached": limit_reached,
         "token_timestamp": usage.token_timestamp,
         "allowance_timestamp": usage.allowance_timestamp,
+        "ordinaryUsageAllowed": usage.ordinary_usage_allowed,
+        "allowance_error": usage.allowance_error,
     }
 
     print(json.dumps(data, indent=2))

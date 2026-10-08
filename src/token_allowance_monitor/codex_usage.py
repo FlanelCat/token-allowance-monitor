@@ -36,6 +36,8 @@ class CodexUsage:
     primary: WindowUsage | None
     secondary: WindowUsage | None
     tokens: TokenUsage | None
+    ordinary_usage_allowed: bool | None = None
+    allowance_error: str | None = None
 
 
 def newest_session() -> Path:
