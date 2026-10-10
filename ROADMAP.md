@@ -89,6 +89,33 @@ Before implementing v0.2.0 settings reporting:
 - Automated tests cover multiple-instance ambiguity, missing settings, API failures, and backward-compatible JSON output.
 - CLI and widget remain usable if no VS Code Codex instance is running.
 
+## Future investigation — ChatGPT capability status and Chat usage (release TBD)
+
+**Why this was added:** The user observed the ChatGPT warning: “Capabilities reduced until 8:37 PM. Responses may have lower quality.” At the same time, the ChatGPT Usage page showed the shared Codex/Work allowance at 100% remaining for the five-hour window and 17% remaining for the weekly window. The page stated that those limits are shared across Codex, Work, Workspace Agents, and ChatGPT for Excel, but that ordinary Chat conversations are not included.
+
+This suggests the reduced-capability warning may be separate from the shared Codex/Work allowance. Its precise trigger, accounting system, and reset mechanism have **not** been established.
+
+### Goals
+
+- Investigate whether ordinary Chat conversations have model-specific message/usage limits and whether those limits, reset times, or fallback states are exposed through a reliable user-visible or supported interface.
+- Investigate the meaning and trigger of the “Capabilities reduced until [time]” warning, including whether it reflects a temporary model/capability restriction, capacity condition, reasoning feature limit, or another mechanism. Do not assume the cause from the warning text alone.
+- Determine whether a dependable reset timestamp or schedule is available. Display a countdown only when the source actually provides a trustworthy reset time.
+- Keep Chat conversation limits and capability status distinct from the existing five-hour/weekly Codex and Work allowance data. The Usage page explicitly excludes ordinary Chat conversations from those shared limits.
+- If no supported data source exists, document the limitation instead of scraping private endpoints or inventing estimates.
+
+### Credits and reset options
+
+The Usage page also showed zero credits remaining and offered “Full reset (Weekly + 5 hr)” options with expiry dates. These were observed account details, not evidence that using a reset credit would clear the reduced-capability warning. Do not recommend or trigger a credit purchase, automatic reload, or reset as a remedy unless its effect on the specific restriction is verified.
+
+### Acceptance criteria before implementation
+
+1. Identify a supported and reliable source for each proposed Chat-specific value, or record that the value cannot currently be retrieved.
+2. Document scope (account, model, conversation, or temporary service state), timestamp freshness, and uncertainty for each field.
+3. Never infer Chat allowance percentages from the Codex/Work API or mix Chat usage into the existing five-hour/weekly percentages.
+4. Test missing data, stale data, expired reset times, and service/API failures. Unknown must be displayed as unknown, not as zero or “available.”
+5. Keep the existing CLI JSON and Plasma widget compatible; propose any new fields and UI changes before implementation.
+6. Investigate first and present a feasibility report. Wait for user approval before coding.
+
 ## v0.3.0 — Advanced Codex Settings & Integration (deferred)
 
 **Observed UI:** The cog-wheel at the top of the Codex panel leads to a settings view containing:
